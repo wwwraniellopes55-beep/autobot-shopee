@@ -1,5 +1,5 @@
 from fastapi import FastAPI
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
 import threading
@@ -24,7 +24,7 @@ estado_robo = {
     "disparos": 0,
     "protecoes": 0,
     "inicio_sessao": 0,
-    "logs": ["Sistema de Telemetria Inicializado.", "> Motor FastAPI 100% Operacional."]
+    "logs": ["Sistema Inicializado.", "> Motor FastAPI na Nuvem Operacional."]
 }
 
 def add_log(mensagem):
@@ -34,7 +34,7 @@ def add_log(mensagem):
         estado_robo["logs"].pop(0)
 
 # ==========================================
-# INTELIGÊNCIA SHOPEE & SPINTAX
+# INTELIGÊNCIA SHOPEE
 # ==========================================
 def puxar_shopee(keyword_busca):
     url = "https://open-api.affiliate.shopee.com.br/graphql"
@@ -57,32 +57,52 @@ def puxar_shopee(keyword_busca):
             "imagem_url": produto.get('imageUrl', '')
         }
     except:
-        estado_robo["protecoes"] += 1
         return {"nome": "🔥 Promoção Relâmpago", "preco": 39.90, "desconto": "Off", "link_afiliado": "https://shopee.com.br", "imagem_url": ""}
 
 def criar_copy(produto):
-    saudacoes = ["🚨 *ACHADO IMPERDÍVEL!*", "🔥 *BUG DE PREÇO ENCONTRADO!*", "⚡ *OFERTA RELÂMPAGO NA ÁREA!*"]
-    chamadas = ["Corre que acaba rápido!", "Estoque limitadíssimo!", "Menor preço histórico!"]
+    saudacoes = ["🚨 *ACHADO IMPERDÍVEL!*", "🔥 *BUG DE PREÇO ENCONTRADO!*", "⚡ *OFERTA RELÂMPAGO!*"]
     return (f"{random.choice(saudacoes)}\n\n📦 *{produto['nome']}*\n\n"
             f"😱 *Por apenas: R$ {produto['preco']}* ({produto['desconto']} OFF!)\n\n"
-            f"🏃‍♀️ *{random.choice(chamadas)}*\n\n🛒 *Link oficial com desconto:*\n👉 {produto['link_afiliado']}")
+            f"🛒 *Link oficial com desconto:*\n👉 {produto['link_afiliado']}")
 
 # ==========================================
-# MOTORES PLAYWRIGHT
+# MOTORES PLAYWRIGHT (AGORA INVISÍVEIS)
 # ==========================================
 def motor_conectar():
+    if os.path.exists("qrcode.png"):
+        os.remove("qrcode.png")
+        
     try:
-        add_log("Abrindo navegador fantasma para conexão...")
+        add_log("Iniciando navegador fantasma na nuvem...")
         with sync_playwright() as p:
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
-            navegador = p.chromium.launch_persistent_context(user_data_dir=caminho_perfil, headless=False, args=["--start-maximized"])
+            navegador = p.chromium.launch_persistent_context(
+                user_data_dir=caminho_perfil, 
+                headless=True, # <-- Rodando sem tela no servidor
+                args=["--no-sandbox", "--disable-setuid-sandbox"]
+            )
             pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
             pagina.goto("https://web.whatsapp.com/")
-            add_log("Aguardando leitura do QR Code...")
-            pagina.wait_for_selector('#pane-side', timeout=0)
-            add_log("Conexão salva com sucesso! Fechando em 3s...")
-            time.sleep(3)
+            
+            add_log("Aguardando sistema do WhatsApp...")
+            try:
+                pagina.wait_for_selector('canvas', timeout=15000)
+                add_log("Gerando imagem do QR Code para o painel...")
+                pagina.locator('canvas').screenshot(path="qrcode.png")
+                add_log("⚠️ QR Code gerado! Escaneie a imagem que apareceu na tela.")
+                
+                pagina.wait_for_selector('#pane-side', timeout=45000)
+                add_log("✅ Conexão autorizada e salva com sucesso!")
+                if os.path.exists("qrcode.png"): os.remove("qrcode.png")
+            except:
+                if pagina.locator('#pane-side').is_visible():
+                    add_log("✅ O WhatsApp já estava conectado!")
+                else:
+                    add_log("Tempo esgotado ou erro ao ler. Tente conectar novamente.")
+            
+            time.sleep(2)
             navegador.close()
+            add_log("Sessão de configuração encerrada.")
     except Exception as e:
         add_log(f"Erro na conexão: {str(e)}")
 
@@ -93,25 +113,26 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
         estado_robo["ligado"] = False
         return
 
-    nichos_em_alta = ["Fone Sem Fio", "Smartwatch", "Maquiagem", "Skincare", "Tênis Masculino", "Moda Feminina"]
+    nichos_em_alta = ["Fone Sem Fio", "Smartwatch", "Tênis Masculino", "Moda Feminina"]
 
     try:
-        add_log(f"Inicializando motor. Modo Aleatório: {'ATIVADO' if aleatorio else 'DESATIVADO'}")
+        add_log("Inicializando motor de disparos invisível...")
         with sync_playwright() as p:
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
-            navegador = p.chromium.launch_persistent_context(user_data_dir=caminho_perfil, headless=True, args=["--no-sandbox", "--disable-setuid-sandbox"])
+            navegador = p.chromium.launch_persistent_context(
+                user_data_dir=caminho_perfil, 
+                headless=True, 
+                args=["--no-sandbox", "--disable-setuid-sandbox"]
+            )
             pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
-            
-            add_log("Conectando ao WhatsApp Web em segundo plano...")
             pagina.goto("https://web.whatsapp.com/")
-            pagina.wait_for_selector('#pane-side', timeout=0) 
+            pagina.wait_for_selector('#pane-side', timeout=60000) 
             add_log("WhatsApp validado. Iniciando varredura de ofertas...")
             
             while estado_robo["ligado"]:
                 nicho_atual = random.choice(nichos_em_alta) if aleatorio else nicho
                 add_log(f"Buscando produto na Shopee (Nicho: {nicho_atual})...")
-                keyword = f"{nicho_atual} mais vendidos"
-                produto = puxar_shopee(keyword)
+                produto = puxar_shopee(f"{nicho_atual} mais vendidos")
                 copy = criar_copy(produto)
 
                 caminho_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "produto_temp.jpg")
@@ -149,16 +170,15 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     add_log(f"Oferta disparada com sucesso em: {nome_grupo}")
                     time.sleep(random.uniform(2.5, 4.5)) 
                 
-                if os.path.exists(caminho_img):
-                    os.remove(caminho_img)
+                if os.path.exists(caminho_img): os.remove(caminho_img)
                 
-                add_log(f"Ciclo concluído. Dormindo por {tempo_base}s para evitar banimento...")
+                add_log(f"Ciclo concluído. Pausa antiban de {tempo_base}s...")
                 for i in range(tempo_base):
                     if not estado_robo["ligado"]: break
                     time.sleep(1)
                     
             navegador.close()
-            add_log("Operação abortada e navegador fechado.")
+            add_log("Operação abortada. Motor desligado.")
     except Exception as e:
         add_log(f"ERRO CRÍTICO: {str(e)}")
         estado_robo["ligado"] = False
@@ -177,6 +197,12 @@ def api_conectar():
     threading.Thread(target=motor_conectar, daemon=True).start()
     return {"status": "ok"}
 
+@app.get("/api/qrcode")
+def get_qr():
+    if os.path.exists("qrcode.png"):
+        return FileResponse("qrcode.png")
+    return {"status": "aguardando"}
+
 @app.post("/api/iniciar")
 def api_iniciar(dados: DadosDisparo):
     if not estado_robo["ligado"]:
@@ -188,7 +214,7 @@ def api_iniciar(dados: DadosDisparo):
 @app.post("/api/abortar")
 def api_abortar():
     estado_robo["ligado"] = False
-    add_log("Sinal de parada enviado. Aguardando o ciclo atual terminar.")
+    add_log("Sinal de parada enviado. Encerrando em instantes...")
     return {"status": "ok"}
 
 @app.get("/api/status")
@@ -197,13 +223,12 @@ def api_status():
     return {
         "ligado": estado_robo["ligado"],
         "disparos": estado_robo["disparos"],
-        "protecoes": estado_robo["protecoes"],
         "tempo_ativo": segundos_ativos,
         "logs": "\n".join(estado_robo["logs"])
     }
 
 # ==========================================
-# FRONTEND RESPONSIVO (MOBILE E DESKTOP)
+# FRONTEND RESPONSIVO
 # ==========================================
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -241,34 +266,35 @@ def home():
             
             <div class="space-y-5">
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-crosshairs mr-2"></i>Nicho</label>
+                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Nicho</label>
                     <input type="text" id="inp-nicho" value="Eletrônicos" class="input-dark">
                     <label class="flex items-center gap-2 mt-2 cursor-pointer text-sm text-gray-300 hover:text-white">
                         <input type="checkbox" id="chk-aleatorio" class="accent-orange-500 w-4 h-4 rounded"> Modo Aleatório (Em Alta)
                     </label>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider"><i class="fa-brands fa-whatsapp mr-2"></i>Multi-Grupos</label>
+                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Multi-Grupos</label>
                     <input type="text" id="inp-grupos" placeholder="Ex: Grupo 1, Grupo 2" class="input-dark">
                 </div>
-                <div class="p-4 rounded-xl bg-blue-900/20 border border-blue-500/30">
-                    <label class="block text-xs font-bold mb-3 text-blue-400 uppercase tracking-wider"><i class="fa-solid fa-magnifying-glass-chart mr-2"></i>Monitor BS4</label>
-                    <input type="text" placeholder="Link do Produto Shopee" class="input-dark mb-2 !border-blue-500/50">
-                    <input type="text" placeholder="Alerta abaixo de (R$)" class="input-dark !border-blue-500/50">
-                </div>
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider"><i class="fa-solid fa-stopwatch mr-2"></i>Intervalo</label>
+                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Intervalo (Segundos)</label>
                     <input type="number" id="inp-tempo" value="15" class="input-dark">
                 </div>
             </div>
         </aside>
 
         <main class="flex-1 p-4 md:p-8 flex flex-col gap-5 relative z-10 w-full">
-            <header class="flex justify-between items-center mb-2 hidden md:flex">
-                <h2 class="text-2xl font-bold text-white tracking-wide">Interface de Comando</h2>
-            </header>
+            
+            <!-- CAIXA DO QR CODE OCULTA -->
+            <div id="qr-container" class="hidden flex-col items-center justify-center p-6 glass rounded-xl border border-yellow-500/30">
+                <p class="text-yellow-400 font-bold mb-4 text-center"><i class="fa-solid fa-qrcode mr-2"></i>Escaneie o QR Code para conectar</p>
+                <div class="bg-white p-2 rounded-lg">
+                    <img id="qr-img" src="" class="w-48 h-48 md:w-64 md:h-64 object-contain">
+                </div>
+                <p class="text-xs text-gray-400 mt-4 text-center">Aguarde a imagem aparecer. Pode levar até 15 segundos.</p>
+            </div>
 
-            <div class="glass rounded-xl p-4 flex flex-col md:flex-row justify-between items-center border-l-4 border-l-blue-500 gap-4 md:gap-0">
+            <div class="glass rounded-xl p-4 flex flex-col md:flex-row justify-between items-center border-l-4 border-l-blue-500 gap-4 md:gap-0 mt-2">
                 <div class="flex items-center gap-4 w-full md:w-1/4">
                     <div id="status-bg" class="w-12 h-12 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0">
                         <i id="status-icon" class="fa-solid fa-power-off text-xl text-gray-400"></i>
@@ -278,9 +304,7 @@ def home():
                         <p id="status-texto" class="text-lg font-extrabold text-gray-300">STANDBY</p>
                     </div>
                 </div>
-                
                 <div class="w-full h-px md:w-px md:h-10 bg-white/10 my-2 md:my-0"></div>
-                
                 <div class="flex items-center gap-4 w-full md:w-1/4 md:justify-center">
                     <div class="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-paper-plane text-xl text-green-400"></i>
@@ -290,9 +314,7 @@ def home():
                         <p id="lbl-disparos" class="text-2xl font-extrabold text-white">0</p>
                     </div>
                 </div>
-                
                 <div class="w-full h-px md:w-px md:h-10 bg-white/10 my-2 md:my-0"></div>
-                
                 <div class="flex items-center gap-4 w-full md:w-1/4 md:justify-end">
                     <div class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
                         <i class="fa-solid fa-clock text-xl text-purple-400"></i>
@@ -326,7 +348,25 @@ def home():
         </main>
 
         <script>
-            async function conectarApi() { await fetch('/api/conectar', { method: 'POST' }); }
+            async function conectarApi() { 
+                document.getElementById('qr-container').classList.remove('hidden');
+                document.getElementById('qr-img').src = "";
+                await fetch('/api/conectar', { method: 'POST' }); 
+                
+                // Sistema de busca automática do QR Code
+                let tentativas = 0;
+                let qrInterval = setInterval(async () => {
+                    tentativas++;
+                    const res = await fetch('/api/qrcode');
+                    if(res.headers.get('content-type') && res.headers.get('content-type').includes('image')) {
+                        document.getElementById('qr-img').src = '/api/qrcode?' + new Date().getTime();
+                        clearInterval(qrInterval);
+                        setTimeout(() => { document.getElementById('qr-container').classList.add('hidden'); }, 30000); // Esconde após 30s
+                    }
+                    if(tentativas > 25) { clearInterval(qrInterval); document.getElementById('qr-container').classList.add('hidden'); }
+                }, 2000);
+            }
+            
             async function abortarTudo() { await fetch('/api/abortar', { method: 'POST' }); }
             
             async function iniciarDisparos() {
@@ -335,8 +375,7 @@ def home():
                 const g = document.getElementById('inp-grupos').value;
                 const t = parseInt(document.getElementById('inp-tempo').value);
                 await fetch('/api/iniciar', { 
-                    method: 'POST', 
-                    headers: {'Content-Type': 'application/json'}, 
+                    method: 'POST', headers: {'Content-Type': 'application/json'}, 
                     body: JSON.stringify({ nicho: n, aleatorio: a, grupos: g, tempo: t }) 
                 });
             }
