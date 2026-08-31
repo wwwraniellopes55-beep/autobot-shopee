@@ -86,7 +86,7 @@ def motor_conectar():
             
             add_log("Aguardando sistema do WhatsApp...")
             try:
-                pagina.wait_for_selector('canvas', timeout=15000)
+                pagina.wait_for_selector('canvas', timeout=60000)
                 add_log("Gerando imagem do QR Code para o painel...")
                 pagina.locator('canvas').screenshot(path="qrcode.png")
                 add_log("⚠️ QR Code gerado! Escaneie a imagem que apareceu na tela.")
