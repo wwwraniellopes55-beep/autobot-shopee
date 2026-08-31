@@ -165,14 +165,15 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     pagina.keyboard.insert_text(nome_grupo)
                     time.sleep(2.5)
                     pagina.keyboard.press("Enter")
-                    time.sleep(2)
+                    time.sleep(4) 
                     
                     if os.path.exists(caminho_img):
                         try:
-                            pagina.locator('span[data-icon="plus"]').first.click(timeout=5000)
+                            pagina.locator('div[title="Anexar"], div[title="Attach"], span[data-icon="plus"]').first.click(timeout=5000)
                         except:
                             pagina.locator('span[data-icon="clip"]').first.click(timeout=5000)
-                        time.sleep(1)
+                        
+                        time.sleep(1.5)
                         pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
                         time.sleep(3) 
                         pagina.keyboard.insert_text(copy)
