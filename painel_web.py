@@ -73,15 +73,23 @@ def motor_conectar():
         os.remove("qrcode.png")
         
     try:
-        add_log("Iniciando navegador fantasma na nuvem...")
+        add_log("Iniciando navegador fantasma na nuvem com camuflagem...")
         with sync_playwright() as p:
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
             navegador = p.chromium.launch_persistent_context(
                 user_data_dir=caminho_perfil, 
-                headless=True, # <-- Rodando sem tela no servidor
-                args=["--no-sandbox", "--disable-setuid-sandbox"]
+                headless=True,
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1366, "height": 768},
+                args=[
+                    "--no-sandbox", 
+                    "--disable-setuid-sandbox",
+                    "--disable-blink-features=AutomationControlled", 
+                    "--disable-infobars"
+                ]
             )
             pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
+            pagina.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             pagina.goto("https://web.whatsapp.com/")
             
             add_log("Aguardando sistema do WhatsApp...")
@@ -116,16 +124,25 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
     nichos_em_alta = ["Fone Sem Fio", "Smartwatch", "Tênis Masculino", "Moda Feminina"]
 
     try:
-        add_log("Inicializando motor de disparos invisível...")
+        add_log("Inicializando motor de disparos invisível com camuflagem...")
         with sync_playwright() as p:
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
             navegador = p.chromium.launch_persistent_context(
                 user_data_dir=caminho_perfil, 
-                headless=True, 
-                args=["--no-sandbox", "--disable-setuid-sandbox"]
+                headless=True,
+                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                viewport={"width": 1366, "height": 768},
+                args=[
+                    "--no-sandbox", 
+                    "--disable-setuid-sandbox",
+                    "--disable-blink-features=AutomationControlled", 
+                    "--disable-infobars"
+                ]
             )
             pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
+            pagina.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             pagina.goto("https://web.whatsapp.com/")
+            
             pagina.wait_for_selector('#pane-side', timeout=60000) 
             add_log("WhatsApp validado. Iniciando varredura de ofertas...")
             
