@@ -186,10 +186,15 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                         pagina.keyboard.insert_text(copy)
                         time.sleep(1.5)
                         pagina.keyboard.press("Enter")
+                        
+                        # NOVA TRAVA PARA GARANTIR O UPLOAD DA IMAGEM
+                        add_log("Aguardando upload da imagem para o servidor...")
+                        time.sleep(8)
                     else:
                         pagina.keyboard.insert_text(copy)
                         time.sleep(1.5)
                         pagina.keyboard.press("Enter")
+                        time.sleep(3)
                     
                     estado_robo["disparos"] += 1
                     add_log(f"Oferta disparada com sucesso em: {nome_grupo}")
