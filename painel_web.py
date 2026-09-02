@@ -1,4 +1,4 @@
-Vfrom fastapi import FastAPI
+from fastapi import FastAPI
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
