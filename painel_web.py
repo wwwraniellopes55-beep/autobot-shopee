@@ -9,6 +9,7 @@ import requests
 import hashlib
 import json
 import random
+import base64
 from playwright.sync_api import sync_playwright
 
 app = FastAPI(title="Shopee AutoBot SaaS")
@@ -167,21 +168,27 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     pagina.keyboard.press("Enter")
                     time.sleep(4) 
                     
+                    # === NOVO SISTEMA DE ANEXO (INJEÇÃO VIA CLIPBOARD) ===
                     if os.path.exists(caminho_img):
-                        try:
-                            pagina.locator('div[title="Anexar"], div[title="Attach"], span[data-icon="plus"]').first.click(timeout=5000)
-                        except:
-                            pagina.locator('span[data-icon="clip"]').first.click(timeout=5000)
+                        with open(caminho_img, "rb") as img_file:
+                            img_b64 = base64.b64encode(img_file.read()).decode('utf-8')
                         
-                        time.sleep(1.5)
-                        pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
-                        time.sleep(3) 
+                        pagina.evaluate('''(b64) => {
+                            const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                            const file = new File([bytes], "oferta.jpg", { type: "image/jpeg" });
+                            const dt = new DataTransfer();
+                            dt.items.add(file);
+                            const event = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true });
+                            document.activeElement.dispatchEvent(event);
+                        }''', img_b64)
+                        
+                        time.sleep(2.5) 
                         pagina.keyboard.insert_text(copy)
-                        time.sleep(1)
+                        time.sleep(1.5)
                         pagina.keyboard.press("Enter")
                     else:
                         pagina.keyboard.insert_text(copy)
-                        time.sleep(1)
+                        time.sleep(1.5)
                         pagina.keyboard.press("Enter")
                     
                     estado_robo["disparos"] += 1
