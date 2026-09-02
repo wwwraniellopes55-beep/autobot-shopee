@@ -9,7 +9,6 @@ import requests
 import hashlib
 import json
 import random
-import base64
 from playwright.sync_api import sync_playwright
 
 app = FastAPI(title="Shopee AutoBot SaaS")
@@ -161,56 +160,58 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     if not estado_robo["ligado"]: break
                     
                     add_log(f"Acessando grupo: {nome_grupo}...")
-                    pagina.keyboard.press("Control+Alt+/")
-                    time.sleep(1.5)
-                    pagina.keyboard.insert_text(nome_grupo)
-                    time.sleep(2.5)
-                    pagina.keyboard.press("Enter")
-                    time.sleep(4) 
-                    
-                    # === INJEÇÃO DIRETA BLINDADA (IGNORA BOTÕES DO WHATSAPP) ===
-                    if os.path.exists(caminho_img):
-                        add_log("Injetando imagem na caixa de texto...")
-                        with open(caminho_img, "rb") as img_file:
-                            img_b64 = base64.b64encode(img_file.read()).decode('utf-8')
+                    try:
+                        # 1. Clica obrigatoriamente na caixa de pesquisa
+                        caixa_busca = pagina.locator('div[id="side"] div[contenteditable="true"]').first
+                        caixa_busca.click(timeout=8000)
+                        caixa_busca.fill(nome_grupo)
+                        time.sleep(2)
+                        pagina.keyboard.press("Enter")
+                        time.sleep(3)
                         
-                        sucesso = pagina.evaluate('''(b64) => {
-                            const textBox = document.querySelector('footer div[contenteditable="true"]');
-                            if(textBox) {
-                                textBox.focus();
-                                const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-                                const file = new File([bytes], "oferta.jpg", { type: "image/jpeg" });
-                                const dt = new DataTransfer();
-                                dt.items.add(file);
-                                const event = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true });
-                                textBox.dispatchEvent(event);
-                                return true;
-                            }
-                            return false;
-                        }''', img_b64)
+                        # 2. Garante que ativou a caixa de mensagem da conversa
+                        caixa_msg = pagina.locator('div[id="main"] div[contenteditable="true"]').first
+                        caixa_msg.click(timeout=5000)
                         
-                        if sucesso:
-                            time.sleep(3.5) 
-                            pagina.keyboard.insert_text(copy)
-                            time.sleep(1.5)
-                            pagina.keyboard.press("Enter")
-                            
-                            add_log("Aguardando upload da imagem (8s)...")
-                            time.sleep(8)
+                        if os.path.exists(caminho_img):
+                            add_log("Anexando imagem...")
+                            try:
+                                # 3. Busca o botão exato de anexo (clipe ou o novo +)
+                                btn_anexo = pagina.locator('div[title="Anexar"], span[data-icon="plus"], span[data-icon="clip"]').first
+                                btn_anexo.click(timeout=5000)
+                                time.sleep(1.5)
+                                
+                                # Faz o upload silencioso no input oculto
+                                pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
+                                add_log("Aguardando pré-visualização...")
+                                time.sleep(4)
+                                
+                                # Digita a legenda e envia
+                                pagina.keyboard.insert_text(copy)
+                                time.sleep(1.5)
+                                pagina.keyboard.press("Enter")
+                                
+                                add_log("Aguardando upload no servidor (8s)...")
+                                time.sleep(8)
+                            except Exception as ex:
+                                add_log("Falha ao anexar imagem. Enviando texto.")
+                                caixa_msg.click()
+                                caixa_msg.fill(copy)
+                                time.sleep(1.5)
+                                pagina.keyboard.press("Enter")
+                                time.sleep(3)
                         else:
-                            add_log("Caixa de texto não encontrada. Enviando só texto.")
-                            pagina.keyboard.insert_text(copy)
+                            caixa_msg.fill(copy)
                             time.sleep(1.5)
                             pagina.keyboard.press("Enter")
                             time.sleep(3)
-                    else:
-                        pagina.keyboard.insert_text(copy)
-                        time.sleep(1.5)
-                        pagina.keyboard.press("Enter")
-                        time.sleep(3)
-                    
-                    estado_robo["disparos"] += 1
-                    add_log(f"Oferta disparada com sucesso em: {nome_grupo}")
+                        
+                        estado_robo["disparos"] += 1
+                        add_log(f"Oferta disparada com sucesso em: {nome_grupo}")
+                        
+                    except Exception as e:
+                        add_log(f"Erro: Não foi possível abrir o grupo '{nome_grupo}'.")
+                        
                     time.sleep(random.uniform(2.5, 4.5)) 
                 
                 if os.path.exists(caminho_img): os.remove(caminho_img)
