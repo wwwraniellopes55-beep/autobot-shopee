@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+Vfrom fastapi import FastAPI
 from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 import uvicorn
@@ -9,6 +9,7 @@ import requests
 import hashlib
 import json
 import random
+import base64
 from playwright.sync_api import sync_playwright
 
 app = FastAPI(title="Shopee AutoBot SaaS")
@@ -66,7 +67,7 @@ def criar_copy(produto):
             f"🛒 *Link oficial com desconto:*\n👉 {produto['link_afiliado']}")
 
 # ==========================================
-# MOTORES PLAYWRIGHT (AGORA INVISÍVEIS)
+# MOTORES PLAYWRIGHT
 # ==========================================
 def motor_conectar():
     if os.path.exists("qrcode.png"):
@@ -167,30 +168,37 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     pagina.keyboard.press("Enter")
                     time.sleep(4) 
                     
-                    # === SISTEMA ROBUSTO DE ANEXO (ATUALIZADO WHATSAPP) ===
+                    # === INJEÇÃO DIRETA BLINDADA (IGNORA BOTÕES DO WHATSAPP) ===
                     if os.path.exists(caminho_img):
-                        add_log("Anexando imagem do produto...")
-                        try:
-                            # 1. Clica no novo botão '+' (plus) ou antigo clipe com limite maior (6s)
-                            pagina.locator('span[data-icon="plus"], span[data-icon="clip"], div[title="Anexar"]').first.click(timeout=6000)
-                            time.sleep(1.5)
-                            
-                            # 2. Insere a imagem direto no input nativo do WhatsApp
-                            pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
-                            
-                            add_log("Aguardando pré-visualização da mídia...")
-                            time.sleep(4)
-                            
-                            # 3. Digita a copy e envia
-                            add_log("Inserindo legenda e enviando...")
+                        add_log("Injetando imagem na caixa de texto...")
+                        with open(caminho_img, "rb") as img_file:
+                            img_b64 = base64.b64encode(img_file.read()).decode('utf-8')
+                        
+                        sucesso = pagina.evaluate('''(b64) => {
+                            const textBox = document.querySelector('footer div[contenteditable="true"]');
+                            if(textBox) {
+                                textBox.focus();
+                                const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
+                                const file = new File([bytes], "oferta.jpg", { type: "image/jpeg" });
+                                const dt = new DataTransfer();
+                                dt.items.add(file);
+                                const event = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true });
+                                textBox.dispatchEvent(event);
+                                return true;
+                            }
+                            return false;
+                        }''', img_b64)
+                        
+                        if sucesso:
+                            time.sleep(3.5) 
                             pagina.keyboard.insert_text(copy)
-                            time.sleep(2)
+                            time.sleep(1.5)
                             pagina.keyboard.press("Enter")
                             
-                            add_log("Aguardando upload no WhatsApp...")
+                            add_log("Aguardando upload da imagem (8s)...")
                             time.sleep(8)
-                        except Exception as ex:
-                            add_log("Falha no clique do anexo. Enviando apenas como texto puro.")
+                        else:
+                            add_log("Caixa de texto não encontrada. Enviando só texto.")
                             pagina.keyboard.insert_text(copy)
                             time.sleep(1.5)
                             pagina.keyboard.press("Enter")
