@@ -9,7 +9,6 @@ import requests
 import hashlib
 import json
 import random
-import base64
 from playwright.sync_api import sync_playwright
 
 app = FastAPI(title="Shopee AutoBot SaaS")
@@ -168,31 +167,48 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     pagina.keyboard.press("Enter")
                     time.sleep(4) 
                     
-                    # === NOVO SISTEMA DE ANEXO (INJEÇÃO VIA CLIPBOARD) ===
+                    # === SISTEMA ROBUSTO DE ANEXO DIRETO VIA INPUT FILE ===
                     if os.path.exists(caminho_img):
-                        with open(caminho_img, "rb") as img_file:
-                            img_b64 = base64.b64encode(img_file.read()).decode('utf-8')
-                        
-                        pagina.evaluate('''(b64) => {
-                            const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-                            const file = new File([bytes], "oferta.jpg", { type: "image/jpeg" });
-                            const dt = new DataTransfer();
-                            dt.items.add(file);
-                            const event = new ClipboardEvent("paste", { clipboardData: dt, bubbles: true });
-                            document.activeElement.dispatchEvent(event);
-                        }''', img_b64)
-                        
-                        time.sleep(2.5) 
-                        pagina.keyboard.insert_text(copy)
-                        time.sleep(1.5)
-                        pagina.keyboard.press("Enter")
-                        
-                        # NOVA TRAVA PARA GARANTIR O UPLOAD DA IMAGEM
-                        add_log("Aguardando upload da imagem para o servidor...")
-                        time.sleep(8)
+                        add_log("Anexando imagem do produto...")
+                        try:
+                            # Clica no botão de anexo (clip) para abrir as opções de mídia
+                            try:
+                                pagina.locator('span[data-icon="clip"]').click(timeout=3000)
+                            except:
+                                pagina.locator('div[title="Anexar"], div[title="Attach"]').first.click(timeout=3000)
+                            
+                            time.sleep(1.5)
+                            
+                            # Insere o arquivo direto no input escondido de imagem/vídeo do WhatsApp
+                            input_file = pagina.locator('input[type="file"]')
+                            input_file.set_input_files(caminho_img)
+                            
+                            add_log("Aguardando pré-visualização da mídia...")
+                            time.sleep(4)
+                            
+                            # Cola a copy na caixa de legenda que aparece na tela de preview
+                            add_log("Inserindo legenda e enviando...")
+                            
+                            # Tenta focar na caixa de legenda da foto
+                            try:
+                                pagina.locator('div[contenteditable="true"][data-tab="10"]').fill(copy)
+                            except:
+                                pagina.keyboard.insert_text(copy)
+                                
+                            time.sleep(2)
+                            pagina.keyboard.press("Enter")
+                            
+                            add_log("Aguardando envio completo para o grupo...")
+                            time.sleep(6)
+                        except Exception as ex:
+                            add_log(f"Falha ao enviar imagem, enviando apenas texto: {str(ex)}")
+                            pagina.keyboard.insert_text(copy)
+                            time.sleep(1)
+                            pagina.keyboard.press("Enter")
+                            time.sleep(3)
                     else:
                         pagina.keyboard.insert_text(copy)
-                        time.sleep(1.5)
+                        time.sleep(1)
                         pagina.keyboard.press("Enter")
                         time.sleep(3)
                     
