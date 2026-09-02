@@ -167,48 +167,37 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     pagina.keyboard.press("Enter")
                     time.sleep(4) 
                     
-                    # === SISTEMA ROBUSTO DE ANEXO DIRETO VIA INPUT FILE ===
+                    # === SISTEMA ROBUSTO DE ANEXO (ATUALIZADO WHATSAPP) ===
                     if os.path.exists(caminho_img):
                         add_log("Anexando imagem do produto...")
                         try:
-                            # Clica no botão de anexo (clip) para abrir as opções de mídia
-                            try:
-                                pagina.locator('span[data-icon="clip"]').click(timeout=3000)
-                            except:
-                                pagina.locator('div[title="Anexar"], div[title="Attach"]').first.click(timeout=3000)
-                            
+                            # 1. Clica no novo botão '+' (plus) ou antigo clipe com limite maior (6s)
+                            pagina.locator('span[data-icon="plus"], span[data-icon="clip"], div[title="Anexar"]').first.click(timeout=6000)
                             time.sleep(1.5)
                             
-                            # Insere o arquivo direto no input escondido de imagem/vídeo do WhatsApp
-                            input_file = pagina.locator('input[type="file"]')
-                            input_file.set_input_files(caminho_img)
+                            # 2. Insere a imagem direto no input nativo do WhatsApp
+                            pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
                             
                             add_log("Aguardando pré-visualização da mídia...")
                             time.sleep(4)
                             
-                            # Cola a copy na caixa de legenda que aparece na tela de preview
+                            # 3. Digita a copy e envia
                             add_log("Inserindo legenda e enviando...")
-                            
-                            # Tenta focar na caixa de legenda da foto
-                            try:
-                                pagina.locator('div[contenteditable="true"][data-tab="10"]').fill(copy)
-                            except:
-                                pagina.keyboard.insert_text(copy)
-                                
+                            pagina.keyboard.insert_text(copy)
                             time.sleep(2)
                             pagina.keyboard.press("Enter")
                             
-                            add_log("Aguardando envio completo para o grupo...")
-                            time.sleep(6)
+                            add_log("Aguardando upload no WhatsApp...")
+                            time.sleep(8)
                         except Exception as ex:
-                            add_log(f"Falha ao enviar imagem, enviando apenas texto: {str(ex)}")
+                            add_log("Falha no clique do anexo. Enviando apenas como texto puro.")
                             pagina.keyboard.insert_text(copy)
-                            time.sleep(1)
+                            time.sleep(1.5)
                             pagina.keyboard.press("Enter")
                             time.sleep(3)
                     else:
                         pagina.keyboard.insert_text(copy)
-                        time.sleep(1)
+                        time.sleep(1.5)
                         pagina.keyboard.press("Enter")
                         time.sleep(3)
                     
