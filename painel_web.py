@@ -143,8 +143,18 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
             pagina.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             pagina.goto("https://web.whatsapp.com/")
             
-            pagina.wait_for_selector('#pane-side', timeout=60000) 
-            add_log("WhatsApp validado. Iniciando varredura de ofertas...")
+            add_log("Aguardando carregamento (Pode levar até 2 min na VPS)...")
+            
+            # Ajuste crucial: Aumento para 120 segundos e tratamento do erro de QR Code
+            try:
+                pagina.wait_for_selector('#pane-side', timeout=120000) 
+                add_log("WhatsApp validado. Iniciando varredura de ofertas...")
+            except:
+                add_log("❌ ERRO: O WhatsApp demorou muito ou desconectou.")
+                add_log("⚠️ Por favor, clique em CONECTAR WPP e leia o QR Code.")
+                estado_robo["ligado"] = False
+                navegador.close()
+                return
             
             while estado_robo["ligado"]:
                 nicho_atual = random.choice(nichos_em_alta) if aleatorio else nicho
@@ -161,7 +171,6 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     
                     add_log(f"Acessando grupo: {nome_grupo}...")
                     try:
-                        # 1. Clica obrigatoriamente na caixa de pesquisa
                         caixa_busca = pagina.locator('div[id="side"] div[contenteditable="true"]').first
                         caixa_busca.click(timeout=8000)
                         caixa_busca.fill(nome_grupo)
@@ -169,24 +178,20 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                         pagina.keyboard.press("Enter")
                         time.sleep(3)
                         
-                        # 2. Garante que ativou a caixa de mensagem da conversa
                         caixa_msg = pagina.locator('div[id="main"] div[contenteditable="true"]').first
                         caixa_msg.click(timeout=5000)
                         
                         if os.path.exists(caminho_img):
                             add_log("Anexando imagem...")
                             try:
-                                # 3. Busca o botão exato de anexo (clipe ou o novo +)
                                 btn_anexo = pagina.locator('div[title="Anexar"], span[data-icon="plus"], span[data-icon="clip"]').first
                                 btn_anexo.click(timeout=5000)
                                 time.sleep(1.5)
                                 
-                                # Faz o upload silencioso no input oculto
                                 pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
                                 add_log("Aguardando pré-visualização...")
                                 time.sleep(4)
                                 
-                                # Digita a legenda e envia
                                 pagina.keyboard.insert_text(copy)
                                 time.sleep(1.5)
                                 pagina.keyboard.press("Enter")
@@ -249,10 +254,13 @@ def get_qr():
 
 @app.post("/api/iniciar")
 def api_iniciar(dados: DadosDisparo):
-    if not estado_robo["ligado"]:
-        estado_robo["ligado"] = True
-        estado_robo["inicio_sessao"] = time.time()
-        threading.Thread(target=motor_iniciar_disparos, args=(dados.nicho, dados.aleatorio, dados.grupos, dados.tempo), daemon=True).start()
+    if estado_robo["ligado"]:
+        add_log("⚠️ O motor já está rodando! Clique em ABORTAR primeiro se quiser reiniciar.")
+        return {"status": "ocupado"}
+        
+    estado_robo["ligado"] = True
+    estado_robo["inicio_sessao"] = time.time()
+    threading.Thread(target=motor_iniciar_disparos, args=(dados.nicho, dados.aleatorio, dados.grupos, dados.tempo), daemon=True).start()
     return {"status": "ok"}
 
 @app.post("/api/abortar")
