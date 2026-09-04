@@ -122,7 +122,7 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
             navegador = p.chromium.launch_persistent_context(
                 user_data_dir=caminho_perfil, 
-                headless=False, # <-- MODO VISUAL ATIVADO AQUI
+                headless=False,
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 viewport={"width": 1366, "height": 768},
                 args=["--no-sandbox", "--disable-setuid-sandbox"]
@@ -157,34 +157,30 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     
                     add_log(f"Acessando grupo: {nome_grupo}...")
                     
-                    # ETAPA 1: MODO VISUAL COM CLIQUE FORÇADO
+                    # ETAPA 1: SELETORES UNIVERSAIS E ACESSIBILIDADE
                     try:
-                        # 1. Procura e clica direto na caixa de texto do menu lateral
-                        caixa_pesquisa = pagina.locator('#pane-side div[contenteditable="true"]').first
+                        # Caça qualquer elemento na tela que contenha a palavra "Pesquisar" (Ignora o HTML interno)
+                        caixa_pesquisa = pagina.locator('[title*="Pesquisar"], [aria-label*="Pesquisar"]').first
                         caixa_pesquisa.click(timeout=5000)
                         time.sleep(1)
                         
-                        # 2. Limpa resquícios e digita o nome
                         pagina.keyboard.press("Control+A")
                         pagina.keyboard.press("Backspace")
                         pagina.keyboard.insert_text(nome_grupo)
                         
-                        # 3. Pausa para o WhatsApp filtrar a lista
                         time.sleep(3.5) 
                         
-                        # 4. Desce e seleciona o primeiro grupo
                         pagina.keyboard.press("ArrowDown")
                         time.sleep(1)
                         pagina.keyboard.press("Enter")
                         time.sleep(3)
                             
-                        # 5. VALIDAÇÃO: Verifica se a barra de digitar mensagem apareceu
-                        if not pagina.locator('footer div[contenteditable="true"]').is_visible(timeout=5000):
-                            add_log(f"Erro: Não foi possível abrir o grupo '{nome_grupo}'.")
+                        if not pagina.locator('footer div[contenteditable="true"], footer [title*="Mensagem"]').is_visible(timeout=5000):
+                            add_log(f"Erro: Grupo '{nome_grupo}' não focou.")
                             continue
                             
                     except Exception as e:
-                        add_log(f"Erro ao forçar clique na pesquisa: {str(e)}")
+                        add_log("Layout de pesquisa não encontrado. Tente conectar novamente.")
                         continue
 
                     # ETAPA 2: ENVIO BLINDADO
