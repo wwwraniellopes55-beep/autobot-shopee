@@ -66,14 +66,14 @@ def criar_copy(produto):
             f"🛒 *Link oficial com desconto:*\n👉 {produto['link_afiliado']}")
 
 # ==========================================
-# MOTORES PLAYWRIGHT
+# MOTORES PLAYWRIGHT BLINDADOS
 # ==========================================
 def motor_conectar():
     if os.path.exists("qrcode.png"):
         os.remove("qrcode.png")
         
     try:
-        add_log("Iniciando navegador fantasma na nuvem com camuflagem...")
+        add_log("Iniciando navegador fantasma na nuvem...")
         with sync_playwright() as p:
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
             navegador = p.chromium.launch_persistent_context(
@@ -81,15 +81,9 @@ def motor_conectar():
                 headless=True,
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 viewport={"width": 1366, "height": 768},
-                args=[
-                    "--no-sandbox", 
-                    "--disable-setuid-sandbox",
-                    "--disable-blink-features=AutomationControlled", 
-                    "--disable-infobars"
-                ]
+                args=["--no-sandbox", "--disable-setuid-sandbox"]
             )
             pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
-            pagina.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             pagina.goto("https://web.whatsapp.com/")
             
             add_log("Aguardando sistema do WhatsApp...")
@@ -106,11 +100,10 @@ def motor_conectar():
                 if pagina.locator('#pane-side').is_visible():
                     add_log("✅ O WhatsApp já estava conectado!")
                 else:
-                    add_log("Tempo esgotado ou erro ao ler. Tente conectar novamente.")
+                    add_log("Tempo esgotado ou erro ao ler. Tente novamente.")
             
             time.sleep(2)
             navegador.close()
-            add_log("Sessão de configuração encerrada.")
     except Exception as e:
         add_log(f"Erro na conexão: {str(e)}")
 
@@ -124,7 +117,7 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
     nichos_em_alta = ["Fone Sem Fio", "Smartwatch", "Tênis Masculino", "Moda Feminina"]
 
     try:
-        add_log("Inicializando motor de disparos invisível com camuflagem...")
+        add_log("Inicializando motor de disparos invisível...")
         with sync_playwright() as p:
             caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
             navegador = p.chromium.launch_persistent_context(
@@ -132,20 +125,13 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                 headless=True,
                 user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
                 viewport={"width": 1366, "height": 768},
-                args=[
-                    "--no-sandbox", 
-                    "--disable-setuid-sandbox",
-                    "--disable-blink-features=AutomationControlled", 
-                    "--disable-infobars"
-                ]
+                args=["--no-sandbox", "--disable-setuid-sandbox"]
             )
             pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
-            pagina.add_init_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
             pagina.goto("https://web.whatsapp.com/")
             
             add_log("Aguardando carregamento (Pode levar até 2 min na VPS)...")
             
-            # Ajuste crucial: Aumento para 120 segundos e tratamento do erro de QR Code
             try:
                 pagina.wait_for_selector('#pane-side', timeout=120000) 
                 add_log("WhatsApp validado. Iniciando varredura de ofertas...")
@@ -170,53 +156,87 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     if not estado_robo["ligado"]: break
                     
                     add_log(f"Acessando grupo: {nome_grupo}...")
+                    
+                    # ETAPA 1: PESQUISA SUPER BLINDADA (ATUALIZADA)
                     try:
-                        caixa_busca = pagina.locator('div[id="side"] div[contenteditable="true"]').first
-                        caixa_busca.click(timeout=8000)
-                        caixa_busca.fill(nome_grupo)
-                        time.sleep(2)
-                        pagina.keyboard.press("Enter")
-                        time.sleep(3)
+                        # 1. Tenta focar na barra de pesquisa (Clique direto ou Atalho)
+                        try:
+                            caixa_pesquisa = pagina.locator('#pane-side div[contenteditable="true"]').first
+                            caixa_pesquisa.click(timeout=3000)
+                        except:
+                            pagina.keyboard.press("Control+Alt+/")
+                            
+                        time.sleep(1.5)
                         
-                        caixa_msg = pagina.locator('div[id="main"] div[contenteditable="true"]').first
-                        caixa_msg.click(timeout=5000)
+                        # 2. Limpa qualquer texto velho e digita o nome do grupo
+                        pagina.keyboard.press("Control+A")
+                        pagina.keyboard.press("Backspace")
+                        pagina.keyboard.insert_text(nome_grupo)
                         
-                        if os.path.exists(caminho_img):
-                            add_log("Anexando imagem...")
-                            try:
-                                btn_anexo = pagina.locator('div[title="Anexar"], span[data-icon="plus"], span[data-icon="clip"]').first
-                                btn_anexo.click(timeout=5000)
-                                time.sleep(1.5)
-                                
-                                pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
-                                add_log("Aguardando pré-visualização...")
-                                time.sleep(4)
-                                
-                                pagina.keyboard.insert_text(copy)
-                                time.sleep(1.5)
-                                pagina.keyboard.press("Enter")
-                                
-                                add_log("Aguardando upload no servidor (8s)...")
-                                time.sleep(8)
-                            except Exception as ex:
-                                add_log("Falha ao anexar imagem. Enviando texto.")
-                                caixa_msg.click()
-                                caixa_msg.fill(copy)
-                                time.sleep(1.5)
-                                pagina.keyboard.press("Enter")
-                                time.sleep(3)
+                        # 3. Pausa MAIOR (crucial) para a lista de contatos carregar
+                        time.sleep(3.5) 
+                        
+                        # 4. CLIQUE EXATO: Em vez de Enter, procura o nome do grupo na lista visual
+                        grupo_elemento = pagina.locator(f'#pane-side span[title="{nome_grupo}"]').first
+                        
+                        if grupo_elemento.is_visible(timeout=5000):
+                            grupo_elemento.click()
+                            time.sleep(2)
                         else:
-                            caixa_msg.fill(copy)
+                            # Fallback se o nome estiver cortado
+                            pagina.keyboard.press("Enter")
+                            time.sleep(2)
+                            
+                        # 5. VALIDAÇÃO: Verifica se o chat principal à direita é o grupo correto
+                        if not pagina.locator('header').filter(has_text=nome_grupo).is_visible(timeout=5000):
+                            add_log(f"Erro: Não foi possível abrir o grupo '{nome_grupo}'.")
+                            continue
+                            
+                    except Exception as e:
+                        add_log(f"Erro ao manipular layout de pesquisa para o grupo '{nome_grupo}'.")
+                        continue
+
+                    # ETAPA 2: ENVIO BLINDADO
+                    if os.path.exists(caminho_img):
+                        add_log("Anexando imagem...")
+                        try:
+                            # Busca qualquer botão de anexo que a versão atual do WPP estiver usando
+                            btn_anexo = pagina.locator('div[title="Anexar"], span[data-icon="plus"], span[data-icon="clip"]').first
+                            btn_anexo.click(timeout=5000)
                             time.sleep(1.5)
+                            
+                            # Injeta a foto direto no núcleo do navegador
+                            pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
+                            add_log("Aguardando pré-visualização...")
+                            time.sleep(3.5) # Tempo para a foto carregar na tela
+                            
+                            # Digita no campo que já ganha foco automático após carregar a foto
+                            pagina.keyboard.insert_text(copy)
+                            time.sleep(1)
+                            pagina.keyboard.press("Enter")
+                            
+                            add_log("Aguardando upload no servidor (8s)...")
+                            time.sleep(8)
+                        except Exception as ex:
+                            add_log("Mudança de layout detectada. Enviando apenas texto por segurança.")
+                            # Fallback para envio apenas de texto
+                            caixa_msg = pagina.locator('div[contenteditable="true"][data-tab="10"], footer div[contenteditable="true"]').first
+                            caixa_msg.click()
+                            pagina.keyboard.insert_text(copy)
+                            time.sleep(1)
                             pagina.keyboard.press("Enter")
                             time.sleep(3)
-                        
-                        estado_robo["disparos"] += 1
-                        add_log(f"Oferta disparada com sucesso em: {nome_grupo}")
-                        
-                    except Exception as e:
-                        add_log(f"Erro: Não foi possível abrir o grupo '{nome_grupo}'.")
-                        
+                    else:
+                        # Se não tem imagem, manda texto
+                        caixa_msg = pagina.locator('div[contenteditable="true"][data-tab="10"], footer div[contenteditable="true"]').first
+                        caixa_msg.click()
+                        pagina.keyboard.insert_text(copy)
+                        time.sleep(1)
+                        pagina.keyboard.press("Enter")
+                        time.sleep(3)
+                    
+                    estado_robo["disparos"] += 1
+                    add_log(f"✅ Oferta disparada com sucesso em: {nome_grupo}")
                     time.sleep(random.uniform(2.5, 4.5)) 
                 
                 if os.path.exists(caminho_img): os.remove(caminho_img)
@@ -229,7 +249,7 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
             navegador.close()
             add_log("Operação abortada. Motor desligado.")
     except Exception as e:
-        add_log(f"ERRO CRÍTICO: {str(e)}")
+        add_log(f"ERRO CRÍTICO GLOBAL: {str(e)}")
         estado_robo["ligado"] = False
 
 # ==========================================
@@ -405,7 +425,6 @@ def home():
                 document.getElementById('qr-img').src = "";
                 await fetch('/api/conectar', { method: 'POST' }); 
                 
-                // Sistema de busca automática do QR Code
                 let tentativas = 0;
                 let qrInterval = setInterval(async () => {
                     tentativas++;
@@ -413,7 +432,7 @@ def home():
                     if(res.headers.get('content-type') && res.headers.get('content-type').includes('image')) {
                         document.getElementById('qr-img').src = '/api/qrcode?' + new Date().getTime();
                         clearInterval(qrInterval);
-                        setTimeout(() => { document.getElementById('qr-container').classList.add('hidden'); }, 30000); // Esconde após 30s
+                        setTimeout(() => { document.getElementById('qr-container').classList.add('hidden'); }, 30000);
                     }
                     if(tentativas > 25) { clearInterval(qrInterval); document.getElementById('qr-container').classList.add('hidden'); }
                 }, 2000);
