@@ -157,10 +157,9 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                     
                     add_log(f"Acessando grupo: {nome_grupo}...")
                     
-                    # ETAPA 1: SELETORES UNIVERSAIS E ACESSIBILIDADE
+                    # ETAPA 1: ESTRATÉGIA DA CAIXA ZERO (INFALÍVEL)
                     try:
-                        # Caça qualquer elemento na tela que contenha a palavra "Pesquisar" (Ignora o HTML interno)
-                        caixa_pesquisa = pagina.locator('[title*="Pesquisar"], [aria-label*="Pesquisar"]').first
+                        caixa_pesquisa = pagina.locator('div[contenteditable="true"]').nth(0)
                         caixa_pesquisa.click(timeout=5000)
                         time.sleep(1)
                         
@@ -175,29 +174,26 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                         pagina.keyboard.press("Enter")
                         time.sleep(3)
                             
-                        if not pagina.locator('footer div[contenteditable="true"], footer [title*="Mensagem"]').is_visible(timeout=5000):
-                            add_log(f"Erro: Grupo '{nome_grupo}' não focou.")
+                        if not pagina.locator('footer div[contenteditable="true"]').is_visible(timeout=5000):
+                            add_log(f"Erro: O grupo '{nome_grupo}' não abriu.")
                             continue
                             
                     except Exception as e:
-                        add_log("Layout de pesquisa não encontrado. Tente conectar novamente.")
+                        add_log(f"Erro na estrutura da tela: {str(e)}")
                         continue
 
                     # ETAPA 2: ENVIO BLINDADO
                     if os.path.exists(caminho_img):
                         add_log("Anexando imagem...")
                         try:
-                            # Busca qualquer botão de anexo que a versão atual do WPP estiver usando
                             btn_anexo = pagina.locator('div[title="Anexar"], span[data-icon="plus"], span[data-icon="clip"]').first
                             btn_anexo.click(timeout=5000)
                             time.sleep(1.5)
                             
-                            # Injeta a foto direto no núcleo do navegador
                             pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
                             add_log("Aguardando pré-visualização...")
-                            time.sleep(3.5) # Tempo para a foto carregar na tela
+                            time.sleep(3.5)
                             
-                            # Digita no campo que já ganha foco automático após carregar a foto
                             pagina.keyboard.insert_text(copy)
                             time.sleep(1)
                             pagina.keyboard.press("Enter")
@@ -206,7 +202,6 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                             time.sleep(8)
                         except Exception as ex:
                             add_log("Mudança de layout detectada. Enviando apenas texto por segurança.")
-                            # Fallback para envio apenas de texto
                             caixa_msg = pagina.locator('div[contenteditable="true"][data-tab="10"], footer div[contenteditable="true"]').first
                             caixa_msg.click()
                             pagina.keyboard.insert_text(copy)
@@ -214,7 +209,6 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                             pagina.keyboard.press("Enter")
                             time.sleep(3)
                     else:
-                        # Se não tem imagem, manda texto
                         caixa_msg = pagina.locator('div[contenteditable="true"][data-tab="10"], footer div[contenteditable="true"]').first
                         caixa_msg.click()
                         pagina.keyboard.insert_text(copy)
