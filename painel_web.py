@@ -9,22 +9,27 @@ import requests
 import hashlib
 import json
 import random
-from playwright.sync_api import sync_playwright
+import base64
 
 app = FastAPI(title="Shopee AutoBot SaaS")
 
 # ==========================================
-# CREDENCIAIS E ESTADO
+# CREDENCIAIS SHOPEE E EVOLUTION API
 # ==========================================
 SHOPEE_APP_ID = "18380880065"
 SHOPEE_SECRET = "42LRGW5UMGFZOF65ZKZOYIV6T7VJ7DX7"
+
+EVO_URL = "http://api.auto-boot.shop:8080"
+EVO_KEY = "ShopeeAutoBot2026"
+EVO_INSTANCE = "ShopeeBot"
+EVO_HEADERS = {"apikey": EVO_KEY, "Content-Type": "application/json"}
 
 estado_robo = {
     "ligado": False,
     "disparos": 0,
     "protecoes": 0,
     "inicio_sessao": 0,
-    "logs": ["Sistema Inicializado.", "> Motor FastAPI na Nuvem Operacional."]
+    "logs": ["Sistema Inicializado.", "> Conexão com Evolution API (VPS) Ativa."]
 }
 
 def add_log(mensagem):
@@ -66,169 +71,101 @@ def criar_copy(produto):
             f"🛒 *Link oficial com desconto:*\n👉 {produto['link_afiliado']}")
 
 # ==========================================
-# MOTORES PLAYWRIGHT BLINDADOS
+# MOTORES EVOLUTION API (VPS)
 # ==========================================
 def motor_conectar():
     if os.path.exists("qrcode.png"):
         os.remove("qrcode.png")
         
     try:
-        add_log("Iniciando navegador fantasma na nuvem...")
-        with sync_playwright() as p:
-            caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
-            navegador = p.chromium.launch_persistent_context(
-                user_data_dir=caminho_perfil, 
-                headless=True,
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                viewport={"width": 1366, "height": 768},
-                args=["--no-sandbox", "--disable-setuid-sandbox"]
-            )
-            pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
-            pagina.goto("https://web.whatsapp.com/")
+        add_log("Solicitando status à VPS...")
+        url_status = f"{EVO_URL}/instance/connectionState/{EVO_INSTANCE}"
+        status_req = requests.get(url_status, headers=EVO_HEADERS)
+        
+        if "open" in status_req.text:
+            add_log("✅ O WhatsApp já está conectado e pronto na VPS!")
+            return
             
-            add_log("Aguardando sistema do WhatsApp...")
-            try:
-                pagina.wait_for_selector('canvas', timeout=60000)
-                add_log("Gerando imagem do QR Code para o painel...")
-                pagina.locator('canvas').screenshot(path="qrcode.png")
-                add_log("⚠️ QR Code gerado! Escaneie a imagem que apareceu na tela.")
-                
-                pagina.wait_for_selector('#pane-side', timeout=45000)
-                add_log("✅ Conexão autorizada e salva com sucesso!")
-                if os.path.exists("qrcode.png"): os.remove("qrcode.png")
-            except:
-                if pagina.locator('#pane-side').is_visible():
-                    add_log("✅ O WhatsApp já estava conectado!")
-                else:
-                    add_log("Tempo esgotado ou erro ao ler. Tente novamente.")
+        add_log("Solicitando QR Code para a Evolution API...")
+        url_connect = f"{EVO_URL}/instance/connect/{EVO_INSTANCE}"
+        res = requests.get(url_connect, headers=EVO_HEADERS)
+        dados = res.json()
+        
+        if "base64" in dados:
+            img_data = dados["base64"].split(",")[1]
+            with open("qrcode.png", "wb") as f:
+                f.write(base64.b64decode(img_data))
+            add_log("⚠️ QR Code gerado! Escaneie a imagem no painel.")
+        else:
+            add_log("Aguardando resposta da VPS...")
             
-            time.sleep(2)
-            navegador.close()
     except Exception as e:
-        add_log(f"Erro na conexão: {str(e)}")
+        add_log(f"Erro na conexão com a VPS: {str(e)}")
 
 def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
+    # Agora a lista recebe os IDs dos grupos (ex: 12036...1@g.us)
     lista_grupos = [g.strip() for g in grupos_str.split(',') if g.strip()]
     if not lista_grupos:
-        add_log("ERRO: Nenhum grupo informado!")
+        add_log("ERRO: Nenhum ID de grupo informado!")
         estado_robo["ligado"] = False
         return
 
     nichos_em_alta = ["Fone Sem Fio", "Smartwatch", "Tênis Masculino", "Moda Feminina"]
 
     try:
-        add_log("Inicializando motor de disparos em MODO VISUAL...")
-        with sync_playwright() as p:
-            caminho_perfil = os.path.join(os.path.dirname(os.path.abspath(__file__)), "sessao_whatsapp")
-            navegador = p.chromium.launch_persistent_context(
-                user_data_dir=caminho_perfil, 
-                headless=False,
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-                viewport={"width": 1366, "height": 768},
-                args=["--no-sandbox", "--disable-setuid-sandbox"]
-            )
-            pagina = navegador.pages[0] if navegador.pages else navegador.new_page()
-            pagina.goto("https://web.whatsapp.com/")
+        add_log("Verificando conexão da API antes do disparo...")
+        url_status = f"{EVO_URL}/instance/connectionState/{EVO_INSTANCE}"
+        status = requests.get(url_status, headers=EVO_HEADERS).json()
+        
+        if status.get("instance", {}).get("state") != "open":
+            add_log("❌ ERRO: O WhatsApp está desconectado na VPS.")
+            add_log("⚠️ Por favor, clique em CONECTAR WPP e leia o QR Code.")
+            estado_robo["ligado"] = False
+            return
             
-            add_log("Aguardando carregamento (Pode levar até 2 min na VPS)...")
-            
-            try:
-                pagina.wait_for_selector('#pane-side', timeout=120000) 
-                add_log("WhatsApp validado. Iniciando varredura de ofertas...")
-            except:
-                add_log("❌ ERRO: O WhatsApp demorou muito ou desconectou.")
-                add_log("⚠️ Por favor, clique em CONECTAR WPP e leia o QR Code.")
-                estado_robo["ligado"] = False
-                navegador.close()
-                return
-            
-            while estado_robo["ligado"]:
-                nicho_atual = random.choice(nichos_em_alta) if aleatorio else nicho
-                add_log(f"Buscando produto na Shopee (Nicho: {nicho_atual})...")
-                produto = puxar_shopee(f"{nicho_atual} mais vendidos")
-                copy = criar_copy(produto)
+        add_log("Conexão validada. Iniciando varredura e envios via API...")
+        
+        while estado_robo["ligado"]:
+            nicho_atual = random.choice(nichos_em_alta) if aleatorio else nicho
+            add_log(f"Buscando produto na Shopee (Nicho: {nicho_atual})...")
+            produto = puxar_shopee(f"{nicho_atual} mais vendidos")
+            copy = criar_copy(produto)
 
-                caminho_img = os.path.join(os.path.dirname(os.path.abspath(__file__)), "produto_temp.jpg")
-                if produto.get("imagem_url"):
-                    open(caminho_img, 'wb').write(requests.get(produto["imagem_url"]).content)
-
-                for nome_grupo in lista_grupos:
-                    if not estado_robo["ligado"]: break
+            for grupo_jid in lista_grupos:
+                if not estado_robo["ligado"]: break
+                
+                add_log(f"Disparando oferta para o ID: {grupo_jid[:10]}...")
+                
+                payload = {
+                    "number": grupo_jid,
+                    "options": {
+                        "delay": 2000,
+                        "presence": "composing",
+                        "linkPreview": True # Gera miniatura da foto pelo link da Shopee
+                    },
+                    "text": copy
+                }
+                
+                try:
+                    url_send = f"{EVO_URL}/message/sendText/{EVO_INSTANCE}"
+                    res = requests.post(url_send, headers=EVO_HEADERS, json=payload, timeout=15)
                     
-                    add_log(f"Acessando grupo: {nome_grupo}...")
-                    
-                    # ETAPA 1: ESTRATÉGIA DA CAIXA ZERO (INFALÍVEL)
-                    try:
-                        caixa_pesquisa = pagina.locator('div[contenteditable="true"]').nth(0)
-                        caixa_pesquisa.click(timeout=5000)
-                        time.sleep(1)
-                        
-                        pagina.keyboard.press("Control+A")
-                        pagina.keyboard.press("Backspace")
-                        pagina.keyboard.insert_text(nome_grupo)
-                        
-                        time.sleep(3.5) 
-                        
-                        pagina.keyboard.press("ArrowDown")
-                        time.sleep(1)
-                        pagina.keyboard.press("Enter")
-                        time.sleep(3)
-                            
-                        if not pagina.locator('footer div[contenteditable="true"]').is_visible(timeout=5000):
-                            add_log(f"Erro: O grupo '{nome_grupo}' não abriu.")
-                            continue
-                            
-                    except Exception as e:
-                        add_log(f"Erro na estrutura da tela: {str(e)}")
-                        continue
-
-                    # ETAPA 2: ENVIO BLINDADO
-                    if os.path.exists(caminho_img):
-                        add_log("Anexando imagem...")
-                        try:
-                            btn_anexo = pagina.locator('div[title="Anexar"], span[data-icon="plus"], span[data-icon="clip"]').first
-                            btn_anexo.click(timeout=5000)
-                            time.sleep(1.5)
-                            
-                            pagina.locator('input[type="file"]').first.set_input_files(caminho_img)
-                            add_log("Aguardando pré-visualização...")
-                            time.sleep(3.5)
-                            
-                            pagina.keyboard.insert_text(copy)
-                            time.sleep(1)
-                            pagina.keyboard.press("Enter")
-                            
-                            add_log("Aguardando upload no servidor (8s)...")
-                            time.sleep(8)
-                        except Exception as ex:
-                            add_log("Mudança de layout detectada. Enviando apenas texto por segurança.")
-                            caixa_msg = pagina.locator('div[contenteditable="true"][data-tab="10"], footer div[contenteditable="true"]').first
-                            caixa_msg.click()
-                            pagina.keyboard.insert_text(copy)
-                            time.sleep(1)
-                            pagina.keyboard.press("Enter")
-                            time.sleep(3)
+                    if res.status_code == 201:
+                        estado_robo["disparos"] += 1
+                        add_log(f"✅ Oferta entregue com sucesso via VPS!")
                     else:
-                        caixa_msg = pagina.locator('div[contenteditable="true"][data-tab="10"], footer div[contenteditable="true"]').first
-                        caixa_msg.click()
-                        pagina.keyboard.insert_text(copy)
-                        time.sleep(1)
-                        pagina.keyboard.press("Enter")
-                        time.sleep(3)
-                    
-                    estado_robo["disparos"] += 1
-                    add_log(f"✅ Oferta disparada com sucesso em: {nome_grupo}")
-                    time.sleep(random.uniform(2.5, 4.5)) 
+                        add_log(f"❌ Falha no envio. Código: {res.status_code}")
+                except Exception as ex:
+                    add_log(f"Erro de comunicação: {str(ex)}")
                 
-                if os.path.exists(caminho_img): os.remove(caminho_img)
+                time.sleep(random.uniform(2.5, 4.5)) 
+            
+            add_log(f"Ciclo concluído. Pausa antiban de {tempo_base}s...")
+            for i in range(tempo_base):
+                if not estado_robo["ligado"]: break
+                time.sleep(1)
                 
-                add_log(f"Ciclo concluído. Pausa antiban de {tempo_base}s...")
-                for i in range(tempo_base):
-                    if not estado_robo["ligado"]: break
-                    time.sleep(1)
-                    
-            navegador.close()
-            add_log("Operação abortada. Motor desligado.")
+        add_log("Operação abortada. Motor desligado.")
     except Exception as e:
         add_log(f"ERRO CRÍTICO GLOBAL: {str(e)}")
         estado_robo["ligado"] = False
@@ -256,7 +193,7 @@ def get_qr():
 @app.post("/api/iniciar")
 def api_iniciar(dados: DadosDisparo):
     if estado_robo["ligado"]:
-        add_log("⚠️ O motor já está rodando! Clique em ABORTAR primeiro se quiser reiniciar.")
+        add_log("⚠️ O motor já está rodando! Clique em ABORTAR primeiro.")
         return {"status": "ocupado"}
         
     estado_robo["ligado"] = True
@@ -326,8 +263,8 @@ def home():
                     </label>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Multi-Grupos</label>
-                    <input type="text" id="inp-grupos" placeholder="Ex: Grupo 1, Grupo 2" class="input-dark">
+                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">IDs WPP (Multi-Grupos)</label>
+                    <input type="text" id="inp-grupos" placeholder="Ex: 12036...1@g.us, 12036...2@g.us" class="input-dark">
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Intervalo (Segundos)</label>
@@ -338,13 +275,12 @@ def home():
 
         <main class="flex-1 p-4 md:p-8 flex flex-col gap-5 relative z-10 w-full">
             
-            <!-- CAIXA DO QR CODE OCULTA -->
             <div id="qr-container" class="hidden flex-col items-center justify-center p-6 glass rounded-xl border border-yellow-500/30">
-                <p class="text-yellow-400 font-bold mb-4 text-center"><i class="fa-solid fa-qrcode mr-2"></i>Escaneie o QR Code para conectar</p>
+                <p class="text-yellow-400 font-bold mb-4 text-center"><i class="fa-solid fa-qrcode mr-2"></i>Escaneie o QR Code para conectar na VPS</p>
                 <div class="bg-white p-2 rounded-lg">
                     <img id="qr-img" src="" class="w-48 h-48 md:w-64 md:h-64 object-contain">
                 </div>
-                <p class="text-xs text-gray-400 mt-4 text-center">Aguarde a imagem aparecer. Pode levar até 15 segundos.</p>
+                <p class="text-xs text-gray-400 mt-4 text-center">Aguarde a imagem aparecer. Pode levar alguns segundos.</p>
             </div>
 
             <div class="glass rounded-xl p-4 flex flex-col md:flex-row justify-between items-center border-l-4 border-l-blue-500 gap-4 md:gap-0 mt-2">
@@ -382,7 +318,7 @@ def home():
             <div class="flex-1 flex flex-col mt-2 glass rounded-xl p-1 min-h-[250px]">
                 <div class="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-black/40 rounded-t-xl">
                     <div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span class="ml-2 text-xs text-gray-500 font-mono"><i class="fa-solid fa-terminal mr-2"></i>console_output</span>
+                    <span class="ml-2 text-xs text-gray-500 font-mono"><i class="fa-solid fa-terminal mr-2"></i>console_output (VPS)</span>
                 </div>
                 <textarea id="caixa-log" class="terminal w-full flex-1 p-5 resize-none text-sm focus:outline-none rounded-b-xl" readonly></textarea>
             </div>
