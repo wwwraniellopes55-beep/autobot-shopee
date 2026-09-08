@@ -228,7 +228,7 @@ def api_status():
     }
 
 # ==========================================
-# FRONTEND RESPONSIVO
+# FRONTEND RESPONSIVO ULTRA PREMIUM
 # ==========================================
 @app.get("/", response_class=HTMLResponse)
 def home():
@@ -240,108 +240,180 @@ def home():
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>SaaS - Shopee AutoBot PRO</title>
         <script src="https://cdn.tailwindcss.com"></script>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap');
             body { 
-                background-color: #0f172a;
-                background-image: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.4) 0px, transparent 50%), radial-gradient(at 100% 0%, rgba(139, 92, 246, 0.4) 0px, transparent 50%), radial-gradient(at 100% 100%, rgba(239, 68, 68, 0.2) 0px, transparent 50%);
-                background-attachment: fixed; color: #e2e8f0; font-family: 'Outfit', sans-serif;
+                background-color: #020617; /* Slate 950 */
+                color: #e2e8f0; 
+                font-family: 'Inter', sans-serif;
+                background-image: 
+                    radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.15) 0px, transparent 50%), 
+                    radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.8) 0px, transparent 50%);
+                background-attachment: fixed;
             }
-            .glass { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); border: 1px solid rgba(255, 255, 255, 0.1); box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5); }
-            .input-dark { background: rgba(0, 0, 0, 0.4); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 8px; color: #fff; padding: 10px 12px; width: 100%; outline: none; transition: 0.3s; font-size: 0.9rem; }
-            .input-dark:focus { border-color: #3b82f6; box-shadow: 0 0 10px rgba(59, 130, 246, 0.3); }
-            .terminal { background: rgba(0, 0, 0, 0.65); color: #34d399; font-family: 'Consolas', monospace; border: 1px solid rgba(255, 255, 255, 0.05); min-height: 200px; }
-            ::-webkit-scrollbar { width: 4px; } ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.2); border-radius: 10px; }
+            .panel-card { 
+                background: #0f172a; /* Slate 900 */
+                border: 1px solid #1e293b; /* Slate 800 */
+                box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.5); 
+            }
+            .input-premium { 
+                background: #020617; 
+                border: 1px solid #334155; 
+                border-radius: 12px; 
+                color: #f8fafc; 
+                padding: 12px 16px; 
+                width: 100%; 
+                outline: none; 
+                transition: all 0.3s ease; 
+                font-size: 0.95rem; 
+            }
+            .input-premium:focus { 
+                border-color: #3b82f6; 
+                box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); 
+            }
+            .terminal-window { 
+                background: #000000; 
+                color: #10b981; 
+                font-family: 'JetBrains Mono', monospace; 
+                border: 1px solid #1e293b; 
+            }
+            ::-webkit-scrollbar { width: 6px; } 
+            ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+            ::-webkit-scrollbar-thumb:hover { background: #475569; }
         </style>
     </head>
     <body class="flex flex-col md:flex-row min-h-screen overflow-y-auto overflow-x-hidden">
         
-        <aside class="w-full md:w-80 glass p-6 flex flex-col gap-6 relative z-10 border-b md:border-b-0 md:border-r border-gray-700/50">
-            <div class="text-center mb-2 mt-2">
-                <h1 class="text-3xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 to-rose-500">
-                    <i class="fa-solid fa-robot mr-2 text-orange-500"></i>AutoBot PRO
-                </h1>
+        <!-- SIDEBAR -->
+        <aside class="w-full md:w-80 panel-card p-6 flex flex-col gap-8 relative z-10 md:border-r border-slate-800 md:h-screen">
+            <div class="flex items-center gap-3 mb-2 mt-2">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-500 to-rose-600 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                    <i class="fa-solid fa-robot text-white text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-white tracking-tight">AutoBot <span class="text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-rose-500">PRO</span></h1>
+                    <p class="text-xs text-slate-400 font-medium tracking-wider">TERMINAL DE VENDAS</p>
+                </div>
             </div>
             
-            <div class="space-y-5">
+            <div class="space-y-6">
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Nicho</label>
-                    <input type="text" id="inp-nicho" value="Eletrônicos" class="input-dark">
-                    <label class="flex items-center gap-2 mt-2 cursor-pointer text-sm text-gray-300 hover:text-white">
-                        <input type="checkbox" id="chk-aleatorio" class="accent-orange-500 w-4 h-4 rounded"> Modo Aleatório (Em Alta)
+                    <label class="block text-xs font-semibold mb-2 text-slate-400 uppercase tracking-widest">Nicho de Produto</label>
+                    <input type="text" id="inp-nicho" value="Tênis" class="input-premium shadow-inner">
+                    <label class="flex items-center gap-3 mt-3 cursor-pointer text-sm text-slate-300 hover:text-white transition-colors">
+                        <div class="relative flex items-center">
+                            <input type="checkbox" id="chk-aleatorio" class="peer sr-only">
+                            <div class="w-10 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-orange-500"></div>
+                        </div>
+                        <span class="font-medium">Modo Aleatório (Em Alta)</span>
                     </label>
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">IDs WPP (Multi-Grupos)</label>
-                    <input type="text" id="inp-grupos" placeholder="Ex: 12036...1@g.us" class="input-dark">
+                    <label class="block text-xs font-semibold mb-2 text-slate-400 uppercase tracking-widest">IDs WPP (Multi-Grupos)</label>
+                    <input type="text" id="inp-grupos" placeholder="Ex: 12036...1@g.us" class="input-premium shadow-inner font-mono text-sm" value="120363408173427801@g.us">
                 </div>
                 <div>
-                    <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Intervalo (Segundos)</label>
-                    <input type="number" id="inp-tempo" value="15" class="input-dark">
+                    <label class="block text-xs font-semibold mb-2 text-slate-400 uppercase tracking-widest">Intervalo (Segundos)</label>
+                    <input type="number" id="inp-tempo" value="30" class="input-premium shadow-inner">
                 </div>
+            </div>
+            
+            <div class="mt-auto pt-6 border-t border-slate-800">
+                <p class="text-xs text-slate-500 text-center flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-shield-halved"></i> VPS Connection Secured
+                </p>
             </div>
         </aside>
 
-        <main class="flex-1 p-4 md:p-8 flex flex-col gap-5 relative z-10 w-full">
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 p-4 md:p-8 flex flex-col gap-6 relative z-10 w-full bg-[#020617]">
             
-            <div id="qr-container" class="hidden flex-col items-center justify-center p-6 glass rounded-xl border border-yellow-500/30">
-                <p class="text-yellow-400 font-bold mb-4 text-center"><i class="fa-solid fa-qrcode mr-2"></i>Escaneie o QR Code para conectar na VPS</p>
-                <div class="bg-white p-2 rounded-lg">
-                    <img id="qr-img" src="" class="w-48 h-48 md:w-64 md:h-64 object-contain">
+            <!-- QR CODE MODAL -->
+            <div id="qr-container" class="hidden flex-col items-center justify-center p-8 panel-card rounded-2xl border border-yellow-500/30 shadow-[0_0_40px_rgba(234,179,8,0.1)]">
+                <div class="w-12 h-12 rounded-full bg-yellow-500/20 flex items-center justify-center mb-4">
+                    <i class="fa-solid fa-qrcode text-2xl text-yellow-500 animate-pulse"></i>
                 </div>
-                <p class="text-xs text-gray-400 mt-4 text-center">Aguarde a imagem aparecer. Pode levar alguns segundos.</p>
+                <p class="text-white font-semibold mb-6 text-lg text-center">Conexão Necessária</p>
+                <div class="bg-white p-3 rounded-xl shadow-xl">
+                    <img id="qr-img" src="" class="w-56 h-56 md:w-64 md:h-64 object-contain">
+                </div>
+                <p class="text-sm text-slate-400 mt-6 text-center bg-slate-800/50 py-2 px-4 rounded-lg">Abra o WhatsApp, vá em "Aparelhos Conectados" e escaneie.</p>
             </div>
 
-            <div class="glass rounded-xl p-4 flex flex-col md:flex-row justify-between items-center border-l-4 border-l-blue-500 gap-4 md:gap-0 mt-2">
-                <div class="flex items-center gap-4 w-full md:w-1/4">
-                    <div id="status-bg" class="w-12 h-12 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0">
-                        <i id="status-icon" class="fa-solid fa-power-off text-xl text-gray-400"></i>
+            <!-- STATUS DASHBOARD -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <!-- Status Motor -->
+                <div class="panel-card rounded-2xl p-5 flex items-center gap-4 transition-all">
+                    <div id="status-bg" class="w-14 h-14 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
+                        <i id="status-icon" class="fa-solid fa-power-off text-2xl text-slate-500"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">Motor Web</p>
-                        <p id="status-texto" class="text-lg font-extrabold text-gray-300">STANDBY</p>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Status do Motor</p>
+                        <p id="status-texto" class="text-xl font-bold text-white">STANDBY</p>
                     </div>
                 </div>
-                <div class="w-full h-px md:w-px md:h-10 bg-white/10 my-2 md:my-0"></div>
-                <div class="flex items-center gap-4 w-full md:w-1/4 md:justify-center">
-                    <div class="w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-paper-plane text-xl text-green-400"></i>
+                
+                <!-- Status Disparos -->
+                <div class="panel-card rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-green-500/10 rounded-full blur-2xl"></div>
+                    <div class="w-14 h-14 rounded-xl bg-green-500/10 border border-green-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-paper-plane text-2xl text-green-400"></i>
                     </div>
                     <div>
-                        <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">Disparos</p>
-                        <p id="lbl-disparos" class="text-2xl font-extrabold text-white">0</p>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Disparos Concluídos</p>
+                        <p id="lbl-disparos" class="text-3xl font-bold text-white">0</p>
                     </div>
                 </div>
-                <div class="w-full h-px md:w-px md:h-10 bg-white/10 my-2 md:my-0"></div>
-                <div class="flex items-center gap-4 w-full md:w-1/4 md:justify-end">
-                    <div class="w-12 h-12 rounded-lg bg-purple-500/20 flex items-center justify-center shrink-0">
-                        <i class="fa-solid fa-clock text-xl text-purple-400"></i>
+
+                <!-- Status Uptime -->
+                <div class="panel-card rounded-2xl p-5 flex items-center gap-4 relative overflow-hidden">
+                    <div class="absolute -right-4 -top-4 w-24 h-24 bg-purple-500/10 rounded-full blur-2xl"></div>
+                    <div class="w-14 h-14 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center shrink-0">
+                        <i class="fa-solid fa-clock text-2xl text-purple-400"></i>
                     </div>
-                    <div class="md:text-right">
-                        <p class="text-xs text-gray-400 uppercase font-bold tracking-widest">Uptime</p>
-                        <p id="lbl-tempo" class="text-2xl font-extrabold text-white tracking-tight">00:00:00</p>
+                    <div>
+                        <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest mb-1">Tempo Operacional</p>
+                        <p id="lbl-tempo" class="text-2xl font-bold text-white font-mono tracking-tight">00:00:00</p>
                     </div>
                 </div>
             </div>
 
-            <div class="flex-1 flex flex-col mt-2 glass rounded-xl p-1 min-h-[250px]">
-                <div class="flex items-center gap-2 px-4 py-2 border-b border-white/5 bg-black/40 rounded-t-xl">
-                    <div class="w-3 h-3 rounded-full bg-red-500"></div><div class="w-3 h-3 rounded-full bg-yellow-500"></div><div class="w-3 h-3 rounded-full bg-green-500"></div>
-                    <span class="ml-2 text-xs text-gray-500 font-mono"><i class="fa-solid fa-terminal mr-2"></i>console_output (VPS)</span>
+            <!-- TERMINAL CONSOLE -->
+            <div class="flex-1 flex flex-col panel-card rounded-2xl min-h-[300px] shadow-2xl overflow-hidden">
+                <div class="flex items-center justify-between px-5 py-3 bg-[#0a0f1c] border-b border-slate-800">
+                    <div class="flex gap-2">
+                        <div class="w-3 h-3 rounded-full bg-[#ef4444] shadow-[0_0_5px_#ef4444]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#f59e0b] shadow-[0_0_5px_#f59e0b]"></div>
+                        <div class="w-3 h-3 rounded-full bg-[#10b981] shadow-[0_0_5px_#10b981]"></div>
+                    </div>
+                    <span class="text-xs text-slate-500 font-mono tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-terminal text-[10px]"></i> console_output (VPS)
+                    </span>
+                    <div class="w-14"></div> <!-- Spacer for perfect centering -->
                 </div>
-                <textarea id="caixa-log" class="terminal w-full flex-1 p-5 resize-none text-sm focus:outline-none rounded-b-xl" readonly></textarea>
+                <textarea id="caixa-log" class="terminal-window w-full flex-1 p-6 resize-none text-sm focus:outline-none leading-relaxed" readonly></textarea>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mt-2">
-                <button onclick="conectarApi()" class="bg-blue-600/90 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(37,99,235,0.4)] flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-mobile-screen"></i> CONECTAR WPP
+            <!-- ACTION BUTTONS -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <button onclick="conectarApi()" class="group relative bg-slate-800 hover:bg-slate-700 border border-slate-700 hover:border-blue-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 overflow-hidden">
+                    <div class="absolute inset-0 bg-gradient-to-r from-blue-600/0 via-blue-600/10 to-blue-600/0 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-700"></div>
+                    <div class="flex items-center justify-center gap-3 relative z-10">
+                        <i class="fa-solid fa-mobile-screen text-blue-400 group-hover:scale-110 transition-transform"></i> CONECTAR WPP
+                    </div>
                 </button>
-                <button onclick="iniciarDisparos()" class="bg-emerald-600/90 hover:bg-emerald-500 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(5,150,105,0.4)] flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-play"></i> INICIAR MOTOR
+                
+                <button onclick="iniciarDisparos()" class="group relative bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_30px_rgba(16,185,129,0.5)] transform hover:-translate-y-1">
+                    <div class="flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-play text-white group-hover:animate-pulse"></i> INICIAR MOTOR
+                    </div>
                 </button>
-                <button onclick="abortarTudo()" class="bg-rose-600/90 hover:bg-rose-500 text-white font-bold py-4 px-6 rounded-xl transition-all shadow-[0_0_15px_rgba(225,29,72,0.4)] flex items-center justify-center gap-3">
-                    <i class="fa-solid fa-stop"></i> ABORTAR
+                
+                <button onclick="abortarTudo()" class="group bg-slate-800 hover:bg-rose-600/20 border border-slate-700 hover:border-rose-500 text-white font-semibold py-4 px-6 rounded-xl transition-all duration-300 hover:shadow-[0_0_20px_rgba(225,29,72,0.2)]">
+                    <div class="flex items-center justify-center gap-3">
+                        <i class="fa-solid fa-stop text-rose-500 group-hover:text-rose-400"></i> ABORTAR
+                    </div>
                 </button>
             </div>
         </main>
@@ -404,14 +476,14 @@ def home():
                     const txt = document.getElementById('status-texto');
                     
                     if(dados.ligado) {
-                        bg.className = "w-12 h-12 rounded-lg bg-green-500/20 flex items-center justify-center shrink-0 animate-pulse";
-                        icon.className = "fa-solid fa-satellite-dish text-xl text-green-400";
-                        txt.className = "text-lg font-extrabold text-green-400";
+                        bg.className = "w-14 h-14 rounded-xl bg-green-500/20 border border-green-500/40 flex items-center justify-center shrink-0 shadow-[0_0_15px_rgba(34,197,94,0.3)] animate-pulse";
+                        icon.className = "fa-solid fa-satellite-dish text-2xl text-green-400";
+                        txt.className = "text-xl font-bold text-white drop-shadow-[0_0_8px_rgba(34,197,94,0.8)]";
                         txt.innerText = "ONLINE";
                     } else {
-                        bg.className = "w-12 h-12 rounded-lg bg-gray-700/50 flex items-center justify-center shrink-0";
-                        icon.className = "fa-solid fa-power-off text-xl text-gray-400";
-                        txt.className = "text-lg font-extrabold text-gray-300";
+                        bg.className = "w-14 h-14 rounded-xl bg-slate-800 flex items-center justify-center shrink-0 border border-slate-700";
+                        icon.className = "fa-solid fa-power-off text-2xl text-slate-500";
+                        txt.className = "text-xl font-bold text-slate-300";
                         txt.innerText = "STANDBY";
                     }
                 } catch (e) {}
