@@ -103,7 +103,7 @@ def motor_conectar():
         add_log(f"Erro na conexão com a VPS: {str(e)}")
 
 def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
-    # Agora a lista recebe os IDs dos grupos (ex: 12036...1@g.us)
+    # Recebe os IDs dos grupos (ex: 12036...1@g.us)
     lista_grupos = [g.strip() for g in grupos_str.split(',') if g.strip()]
     if not lista_grupos:
         add_log("ERRO: Nenhum ID de grupo informado!")
@@ -136,23 +136,33 @@ def motor_iniciar_disparos(nicho, aleatorio, grupos_str, tempo_base):
                 
                 add_log(f"Disparando oferta para o ID: {grupo_jid[:10]}...")
                 
-                payload = {
-                    "number": grupo_jid,
-                    "options": {
-                        "delay": 2000,
-                        "presence": "composing",
-                        "linkPreview": True # Gera miniatura da foto pelo link da Shopee
-                    },
-                    "text": copy
-                }
+                # VERIFICA SE EXISTE IMAGEM PARA MUDAR A ROTA DA API
+                if produto.get("imagem_url"):
+                    payload = {
+                        "number": grupo_jid,
+                        "mediatype": "image",
+                        "media": produto["imagem_url"],
+                        "caption": copy
+                    }
+                    url_send = f"{EVO_URL}/message/sendMedia/{EVO_INSTANCE}"
+                else:
+                    payload = {
+                        "number": grupo_jid,
+                        "options": {
+                            "delay": 2000,
+                            "presence": "composing",
+                            "linkPreview": True
+                        },
+                        "text": copy
+                    }
+                    url_send = f"{EVO_URL}/message/sendText/{EVO_INSTANCE}"
                 
                 try:
-                    url_send = f"{EVO_URL}/message/sendText/{EVO_INSTANCE}"
-                    res = requests.post(url_send, headers=EVO_HEADERS, json=payload, timeout=15)
+                    res = requests.post(url_send, headers=EVO_HEADERS, json=payload, timeout=20)
                     
                     if res.status_code == 201:
                         estado_robo["disparos"] += 1
-                        add_log(f"✅ Oferta entregue com sucesso via VPS!")
+                        add_log("✅ Oferta com foto entregue com sucesso!")
                     else:
                         add_log(f"❌ Falha no envio. Código: {res.status_code}")
                 except Exception as ex:
@@ -264,7 +274,7 @@ def home():
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">IDs WPP (Multi-Grupos)</label>
-                    <input type="text" id="inp-grupos" placeholder="Ex: 12036...1@g.us, 12036...2@g.us" class="input-dark">
+                    <input type="text" id="inp-grupos" placeholder="Ex: 12036...1@g.us" class="input-dark">
                 </div>
                 <div>
                     <label class="block text-xs font-bold mb-2 text-gray-400 uppercase tracking-wider">Intervalo (Segundos)</label>
